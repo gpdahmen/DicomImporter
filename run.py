@@ -6,7 +6,6 @@ This script provides a simple way to start the application.
 """
 
 import sys
-import subprocess
 
 try:
     import customtkinter
