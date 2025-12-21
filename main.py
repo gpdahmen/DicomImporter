@@ -71,7 +71,7 @@ class DicomApp:
 
         self.source_entry = ctk.CTkEntry(
             source_path_frame,
-            placeholder_text="Select source directory (e.g., D:\ for CD/DVD)"
+            placeholder_text="Select source directory (e.g., D:\\ for CD/DVD)"
         )
         self.source_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
 

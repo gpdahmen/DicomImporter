@@ -20,7 +20,7 @@ from pynetdicom.sop_class import (
     DigitalXRayImageStorageForPresentation,
     ComputedRadiographyImageStorage,
     UltrasoundImageStorage,
-    UltrasoundMultiframeImageStorage,
+    UltrasoundMultiFrameImageStorage,
     XRayAngiographicImageStorage,
     PositronEmissionTomographyImageStorage,
     RTImageStorage,
@@ -216,7 +216,7 @@ class DicomEngine:
         ae.add_requested_context(DigitalXRayImageStorageForPresentation)
         ae.add_requested_context(ComputedRadiographyImageStorage)
         ae.add_requested_context(UltrasoundImageStorage)
-        ae.add_requested_context(UltrasoundMultiframeImageStorage)
+        ae.add_requested_context(UltrasoundMultiFrameImageStorage)
         ae.add_requested_context(XRayAngiographicImageStorage)
         ae.add_requested_context(PositronEmissionTomographyImageStorage)
         ae.add_requested_context(RTImageStorage)
