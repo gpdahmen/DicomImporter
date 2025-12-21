@@ -84,11 +84,11 @@ class DicomApp:
         source_browse_btn.pack(side="right")
 
         # Destination type section
-        dest_type_frame = ctk.CTkFrame(main_frame)
-        dest_type_frame.pack(fill="x", pady=10)
+        self.dest_type_frame = ctk.CTkFrame(main_frame)
+        self.dest_type_frame.pack(fill="x", pady=10)
 
         dest_type_label = ctk.CTkLabel(
-            dest_type_frame,
+            self.dest_type_frame,
             text="Destination Type:",
             font=ctk.CTkFont(size=14, weight="bold")
         )
@@ -97,7 +97,7 @@ class DicomApp:
         # Radio buttons for destination type
         self.dest_type_var = ctk.StringVar(value="folder")
 
-        radio_frame = ctk.CTkFrame(dest_type_frame)
+        radio_frame = ctk.CTkFrame(self.dest_type_frame)
         radio_frame.pack(fill="x", padx=10, pady=(0, 10))
 
         self.folder_radio = ctk.CTkRadioButton(
@@ -251,10 +251,10 @@ class DicomApp:
     def toggle_destination_type(self):
         """Toggle visibility of folder/PACS configuration sections."""
         if self.dest_type_var.get() == "folder":
-            self.folder_frame.pack(fill="x", pady=10, after=self.dest_type_var.master.master)
+            self.folder_frame.pack(fill="x", pady=10, after=self.dest_type_frame)
             self.pacs_frame.pack_forget()
         else:
-            self.pacs_frame.pack(fill="x", pady=10, after=self.dest_type_var.master.master)
+            self.pacs_frame.pack(fill="x", pady=10, after=self.dest_type_frame)
             self.folder_frame.pack_forget()
 
     def browse_source(self):
@@ -277,13 +277,19 @@ class DicomApp:
 
     def log_message(self, message: str):
         """
-        Add a message to the log window.
+        Add a message to the log window (thread-safe).
 
         Args:
             message: Message to log.
         """
-        self.log_text.insert("end", f"{message}\n")
-        self.log_text.see("end")
+        def _update():
+            self.log_text.insert("end", f"{message}\n")
+            self.log_text.see("end")
+        
+        if threading.current_thread() is threading.main_thread():
+            _update()
+        else:
+            self.root.after(0, _update)
 
     def clear_log(self):
         """Clear the log window."""
@@ -291,16 +297,22 @@ class DicomApp:
 
     def update_progress(self, current: int, total: int):
         """
-        Update the progress bar.
+        Update the progress bar (thread-safe).
 
         Args:
             current: Current progress value.
             total: Total progress value.
         """
-        if total > 0:
-            progress = current / total
-            self.progress_bar.set(progress)
-            self.progress_label.configure(text=f"Progress: {current}/{total} ({progress*100:.1f}%)")
+        def _update():
+            if total > 0:
+                progress = current / total
+                self.progress_bar.set(progress)
+                self.progress_label.configure(text=f"Progress: {current}/{total} ({progress*100:.1f}%)")
+        
+        if threading.current_thread() is threading.main_thread():
+            _update()
+        else:
+            self.root.after(0, _update)
 
     def start_import_export(self):
         """Start the import/export process in a background thread."""
@@ -343,23 +355,39 @@ class DicomApp:
         self.progress_bar.set(0)
         self.progress_label.configure(text="Starting...")
 
+        # Capture all configuration values in main thread before starting background thread
+        config = {
+            'source': source,
+            'dest_type': dest_type,
+        }
+        
+        if dest_type == "folder":
+            config['dest_folder'] = self.folder_entry.get().strip()
+        else:  # PACS
+            config['ae_title'] = self.ae_title_entry.get().strip()
+            config['called_ae'] = self.called_ae_entry.get().strip()
+            config['pacs_ip'] = self.ip_entry.get().strip()
+            config['pacs_port'] = int(self.port_entry.get().strip())
+
         # Run in background thread
         thread = threading.Thread(
             target=self._run_import_export,
-            args=(source, dest_type),
+            args=(config,),
             daemon=True
         )
         thread.start()
 
-    def _run_import_export(self, source: str, dest_type: str):
+    def _run_import_export(self, config: dict):
         """
         Execute the import/export operation.
 
         Args:
-            source: Source directory path.
-            dest_type: Type of destination ('folder' or 'pacs').
+            config: Dictionary with configuration captured from GUI in main thread.
         """
         try:
+            source = config['source']
+            dest_type = config['dest_type']
+            
             self.log_message("="*60)
             self.log_message("Starting DICOM Import/Export Operation")
             self.log_message("="*60)
@@ -377,20 +405,23 @@ class DicomApp:
 
             # Step 2: Export to destination
             self.log_message(f"\nPhase 2: Exporting to {dest_type}...")
-            self.progress_bar.set(0)
+            
+            def _reset_progress():
+                self.progress_bar.set(0)
+            self.root.after(0, _reset_progress)
 
             if dest_type == "folder":
-                dest_folder = self.folder_entry.get().strip()
+                dest_folder = config['dest_folder']
                 exported = self.engine.send_to_folder(
                     dest_folder,
                     progress_callback=self.update_progress
                 )
                 self.log_message(f"\nExport complete: {exported} files copied to {dest_folder}")
             else:  # PACS
-                ae_title = self.ae_title_entry.get().strip()
-                called_ae = self.called_ae_entry.get().strip()
-                pacs_ip = self.ip_entry.get().strip()
-                pacs_port = int(self.port_entry.get().strip())
+                ae_title = config['ae_title']
+                called_ae = config['called_ae']
+                pacs_ip = config['pacs_ip']
+                pacs_port = config['pacs_port']
 
                 exported = self.engine.send_to_pacs(
                     ae_title=ae_title,
@@ -415,10 +446,12 @@ class DicomApp:
             self.log_message(traceback.format_exc())
 
         finally:
-            # Re-enable start button
-            self.is_running = False
-            self.start_button.configure(state="normal", text="Start Import/Export")
-            self.progress_label.configure(text="Operation complete")
+            # Re-enable start button (thread-safe)
+            def _reset_ui():
+                self.is_running = False
+                self.start_button.configure(state="normal", text="Start Import/Export")
+                self.progress_label.configure(text="Operation complete")
+            self.root.after(0, _reset_ui)
 
     def run(self):
         """Start the application main loop."""

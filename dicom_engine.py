@@ -238,7 +238,7 @@ class DicomEngine:
 
             for idx, cached_file in enumerate(self.cached_files, 1):
                 try:
-                    # Read DICOM file
+                    # Read DICOM file (full dataset including pixels needed for C-STORE)
                     ds = pydicom.dcmread(cached_file)
 
                     # Send C-STORE request
