@@ -134,7 +134,13 @@ namespace DicomImporter
 
             var sourcePath = args[1];
             var pacsHost = args[2];
-            var pacsPort = int.Parse(args[3]);
+            
+            if (!int.TryParse(args[3], out var pacsPort))
+            {
+                Console.WriteLine($"Invalid port number: {args[3]}");
+                return;
+            }
+            
             var pacsAeTitle = args[4];
             var clientAeTitle = args.Length > 5 ? args[5] : "DICOM_IMPORTER";
 
@@ -172,7 +178,13 @@ namespace DicomImporter
             }
 
             var pacsHost = args[1];
-            var pacsPort = int.Parse(args[2]);
+            
+            if (!int.TryParse(args[2], out var pacsPort))
+            {
+                Console.WriteLine($"Invalid port number: {args[2]}");
+                return;
+            }
+            
             var pacsAeTitle = args[3];
             var clientAeTitle = args.Length > 4 ? args[4] : "DICOM_IMPORTER";
 

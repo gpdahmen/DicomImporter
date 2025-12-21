@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DicomImporter
@@ -101,7 +102,7 @@ namespace DicomImporter
                             if (response.Status == DicomStatus.Success)
                             {
                                 Console.WriteLine($"Successfully sent: {Path.GetFileName(sourceFile)}");
-                                exportedCount++;
+                                Interlocked.Increment(ref exportedCount);
                             }
                             else
                             {
