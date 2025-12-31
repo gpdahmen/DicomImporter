@@ -336,10 +336,14 @@ class DicomEngine:
         # Explicit VR Little Endian is a commonly supported transfer syntax
         file_meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
         
+        # Set required file meta information elements
+        file_meta.MediaStorageSOPClassUID = pydicom.uid.SecondaryCaptureImageStorage
+        file_meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
+        
         # Create the main dataset
         ds = FileDataset(
-            filename="",  # Filename will be set during export
-            dataset={},
+            "",  # Filename will be set during export
+            {},
             file_meta=file_meta,
             preamble=b"\0" * 128  # Standard DICOM preamble
         )
@@ -350,6 +354,10 @@ class DicomEngine:
         
         # Set modality (type of imaging equipment)
         ds.Modality = "OT"  # OT = Other
+        
+        # Set SOP Class and Instance UIDs (required for valid DICOM)
+        ds.SOPClassUID = pydicom.uid.SecondaryCaptureImageStorage
+        ds.SOPInstanceUID = pydicom.uid.generate_uid()
         
         # Set image dimensions from the pixel array
         if len(pixel_array.shape) == 2:

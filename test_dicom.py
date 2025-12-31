@@ -110,11 +110,13 @@ class TestDicomEngine(unittest.TestCase):
         # Create basic file meta information
         file_meta = pydicom.Dataset()
         file_meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
+        file_meta.MediaStorageSOPClassUID = pydicom.uid.SecondaryCaptureImageStorage
+        file_meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
         
         # Create the main dataset
         ds = FileDataset(
-            filename=file_path,
-            dataset={},
+            file_path,
+            {},
             file_meta=file_meta,
             preamble=b"\0" * 128
         )
@@ -126,6 +128,8 @@ class TestDicomEngine(unittest.TestCase):
         ds.StudyDescription = "Test Study"
         ds.Modality = "CT"
         ds.SeriesDescription = "Test Series"
+        ds.SOPClassUID = pydicom.uid.SecondaryCaptureImageStorage
+        ds.SOPInstanceUID = pydicom.uid.generate_uid()
         
         # Create a small test image (64x64 pixels)
         # Using a gradient pattern for easy verification
