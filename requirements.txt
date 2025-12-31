@@ -1,0 +1,10 @@
+# DICOM Import/Export Application Dependencies
+#
+# Core dependencies required for the application to function.
+# Install with: pip install -r requirements.txt
+
+# DICOM file reading and writing
+pydicom>=2.0.0
+
+# Numerical operations and pixel data handling
+numpy>=1.18.0
