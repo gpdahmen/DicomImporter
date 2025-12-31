@@ -66,12 +66,23 @@ def build_executable():
 
 def verify_build():
     """Verify that the executable was created"""
-    exe_path = os.path.join('dist', 'DicomImporter.exe')
+    # Determine the expected executable name based on platform
+    if sys.platform == 'win32':
+        exe_name = 'DicomImporter.exe'
+    else:
+        exe_name = 'DicomImporter'
+    
+    exe_path = os.path.join('dist', exe_name)
+    
     if os.path.exists(exe_path):
         file_size = os.path.getsize(exe_path) / (1024 * 1024)  # Convert to MB
         print(f"\n✓ Build successful!")
         print(f"  Executable: {exe_path}")
         print(f"  Size: {file_size:.2f} MB")
+        
+        if sys.platform != 'win32':
+            print(f"\n  Note: Built on {sys.platform}. For Windows .exe, run this script on Windows.")
+        
         return True
     else:
         print(f"\n✗ Build failed - executable not found at {exe_path}")
@@ -109,10 +120,19 @@ def main():
     print("\n" + "=" * 60)
     print("Build process completed successfully!")
     print("=" * 60)
-    print("\nThe executable is located in the 'dist' directory.")
-    print("You can now distribute DicomImporter.exe to other Windows PCs.")
-    print("\nNote: The executable includes all dependencies and does not")
-    print("      require Python or any other installations on the target PC.")
+    
+    if sys.platform == 'win32':
+        print("\nThe executable is located in the 'dist' directory.")
+        print("You can now distribute DicomImporter.exe to other Windows PCs.")
+        print("\nNote: The executable includes all dependencies and does not")
+        print("      require Python or any other installations on the target PC.")
+    else:
+        print(f"\nThe executable is located in the 'dist' directory.")
+        print(f"Platform: {sys.platform}")
+        print("\nNote: To create a Windows .exe file, run this script on Windows.")
+        print("      The current build is for the platform it was built on.")
+        print("\nThe executable includes all dependencies and does not require")
+        print("Python or any other installations on the target PC.")
 
 
 if __name__ == "__main__":
