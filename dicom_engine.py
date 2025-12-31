@@ -21,7 +21,13 @@ Dependencies:
 
 import os
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, TYPE_CHECKING
+
+# Type checking imports - only used for type hints, not at runtime
+if TYPE_CHECKING:
+    import numpy as np
+    from pydicom.dataset import FileDataset
+
 try:
     import pydicom
     from pydicom.dataset import Dataset, FileDataset
@@ -70,7 +76,7 @@ class DicomEngine:
             )
         
         # Initialize the current DICOM dataset to None (no file loaded)
-        self.current_dicom: Optional[FileDataset] = None
+        self.current_dicom: Optional['FileDataset'] = None
         
         # Initialize empty metadata dictionary
         self.metadata: Dict[str, Any] = {}
@@ -195,7 +201,7 @@ class DicomEngine:
         """
         return self.metadata.copy()  # Return a copy to prevent external modifications
     
-    def get_pixel_data(self) -> Optional[np.ndarray]:
+    def get_pixel_data(self) -> Optional['np.ndarray']:
         """
         Extract pixel data from the currently loaded DICOM file.
         
@@ -236,7 +242,7 @@ class DicomEngine:
             print(f"Error extracting pixel data: {str(e)}")
             return None
     
-    def export_dicom(self, output_path: str, dataset: Optional[FileDataset] = None) -> bool:
+    def export_dicom(self, output_path: str, dataset: Optional['FileDataset'] = None) -> bool:
         """
         Export a DICOM file to the specified output path.
         
@@ -291,9 +297,9 @@ class DicomEngine:
     
     def create_dicom_from_array(
         self, 
-        pixel_array: np.ndarray, 
+        pixel_array: 'np.ndarray', 
         metadata: Optional[Dict[str, Any]] = None
-    ) -> FileDataset:
+    ) -> 'FileDataset':
         """
         Create a new DICOM dataset from a numpy pixel array and optional metadata.
         
