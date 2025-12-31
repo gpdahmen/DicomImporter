@@ -12,6 +12,9 @@ import sys
 class DicomImporterApp:
     """Main application class for DICOM Importer."""
     
+    # Class constant for DICOM file extensions
+    DICOM_EXTENSIONS = ['.dcm', '.dicom', '.dic']
+    
     def __init__(self, root):
         """Initialize the DICOM Importer application.
         
@@ -147,10 +150,9 @@ class DicomImporterApp:
             bool: True if file might be DICOM, False otherwise
         """
         # Check common DICOM extensions
-        dicom_extensions = ['.dcm', '.dicom', '.dic']
         _, ext = os.path.splitext(filepath.lower())
         
-        if ext in dicom_extensions:
+        if ext in self.DICOM_EXTENSIONS:
             return True
         
         # DICOM files can have no extension, so check if it's a file
@@ -188,12 +190,30 @@ class DicomImporterApp:
             self.append_text(f"\nScanning folder: {folder_path}\n")
             
             # Walk through directory and subdirectories
+            # Update UI periodically to maintain responsiveness
+            file_batch = []
+            batch_size = 10  # Process files in batches
+            
             for root_dir, _, files in os.walk(folder_path):
                 for filename in files:
                     filepath = os.path.join(root_dir, filename)
                     if self.is_dicom_file(filepath):
-                        self.process_dicom_file(filepath)
-                        imported_count += 1
+                        file_batch.append(filepath)
+                        
+                        # Process batch when it reaches the batch size
+                        if len(file_batch) >= batch_size:
+                            for file_path in file_batch:
+                                self.process_dicom_file(file_path)
+                                imported_count += 1
+                            file_batch = []
+                            # Update UI to prevent blocking
+                            self.root.update_idletasks()
+                            self.update_status(f"Processing... ({imported_count} files)")
+            
+            # Process remaining files in the last batch
+            for file_path in file_batch:
+                self.process_dicom_file(file_path)
+                imported_count += 1
             
             if imported_count > 0:
                 self.append_text(f"\nTotal files imported from folder: {imported_count}\n")
