@@ -170,11 +170,16 @@ pip install -r requirements.txt
 
 ## Development
 
+### Testing the Application
+
+For information on how to test the application with sample DICOM files, see [TESTING.md](TESTING.md).
+
 ### Running Tests
-Currently, this project focuses on functionality. To test:
-1. Run the application: `python main.py`
-2. Load a sample DICOM file
-3. Verify image display and metadata viewing work correctly
+Currently, this project focuses on functionality. To validate the setup:
+1. Run the validation script: `python test_validation.py`
+2. Run the application: `python main.py`
+3. Load a sample DICOM file (see [TESTING.md](TESTING.md) for where to get test files)
+4. Verify image display and metadata viewing work correctly
 
 ### Making Changes
 1. Modify `main.py` as needed
