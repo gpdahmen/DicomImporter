@@ -165,10 +165,13 @@ class DicomImporterApp:
         """Import a single DICOM file."""
         self.update_status("Selecting file...")
         
+        # Build file type patterns from class constant
+        dicom_pattern = " ".join(f"*{ext}" for ext in self.DICOM_EXTENSIONS)
+        
         filepath = filedialog.askopenfilename(
             title="Select DICOM File",
             filetypes=[
-                ("DICOM files", "*.dcm *.dicom *.dic"),
+                ("DICOM files", dicom_pattern),
                 ("All files", "*.*")
             ]
         )
