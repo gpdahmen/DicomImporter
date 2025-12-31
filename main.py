@@ -15,6 +15,13 @@ class DicomImporterApp:
     # Class constant for DICOM file extensions
     DICOM_EXTENSIONS = ['.dcm', '.dicom', '.dic']
     
+    # Batch size for folder import processing (balance between UI responsiveness and performance)
+    FOLDER_IMPORT_BATCH_SIZE = 10
+    
+    # Minimum file size to consider as potential DICOM (bytes)
+    # DICOM files are typically at least a few KB
+    MIN_DICOM_FILE_SIZE = 128
+    
     def __init__(self, root):
         """Initialize the DICOM Importer application.
         
@@ -149,17 +156,23 @@ class DicomImporterApp:
         Returns:
             bool: True if file might be DICOM, False otherwise
         """
-        # Check common DICOM extensions
-        _, ext = os.path.splitext(filepath.lower())
-        
-        if ext in self.DICOM_EXTENSIONS:
-            return True
-        
-        # DICOM files can have no extension, so check if it's a file
-        if os.path.isfile(filepath) and not ext:
-            return True
+        try:
+            # Check common DICOM extensions
+            _, ext = os.path.splitext(filepath.lower())
             
-        return False
+            if ext in self.DICOM_EXTENSIONS:
+                return True
+            
+            # DICOM files can have no extension, but should meet minimum size
+            # to avoid processing tiny files that are clearly not DICOM
+            if os.path.isfile(filepath) and not ext:
+                file_size = os.path.getsize(filepath)
+                return file_size >= self.MIN_DICOM_FILE_SIZE
+                
+            return False
+        except (OSError, FileNotFoundError, PermissionError):
+            # If we can't access the file, skip it
+            return False
     
     def import_dicom_file(self):
         """Import a single DICOM file."""
@@ -195,7 +208,6 @@ class DicomImporterApp:
             # Walk through directory and subdirectories
             # Update UI periodically to maintain responsiveness
             file_batch = []
-            batch_size = 10  # Process files in batches
             
             for root_dir, _, files in os.walk(folder_path):
                 for filename in files:
@@ -204,7 +216,7 @@ class DicomImporterApp:
                         file_batch.append(filepath)
                         
                         # Process batch when it reaches the batch size
-                        if len(file_batch) >= batch_size:
+                        if len(file_batch) >= self.FOLDER_IMPORT_BATCH_SIZE:
                             for file_path in file_batch:
                                 self.process_dicom_file(file_path)
                                 imported_count += 1
@@ -247,8 +259,13 @@ class DicomImporterApp:
             self.append_text(f"    Path: {filepath}\n")
             self.append_text(f"    Size: {size_str}\n")
             
+        except (OSError, FileNotFoundError) as e:
+            self.append_text(f"\nError accessing file {filepath}: {str(e)}\n")
+        except PermissionError:
+            self.append_text(f"\nPermission denied: {filepath}\n")
         except Exception as e:
-            self.append_text(f"\nError processing {filepath}: {str(e)}\n")
+            # Catch any other unexpected errors
+            self.append_text(f"\nUnexpected error processing {filepath}: {str(e)}\n")
             messagebox.showerror("Error", f"Failed to process file:\n{filepath}\n\nError: {str(e)}")
     
     @staticmethod
